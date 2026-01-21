@@ -1,9 +1,29 @@
 # ===============================
-# Node / NestJS build output
+# Next.js & Build Outputs
 # ===============================
 node_modules/
+.next/
 dist/
 build/
+out/
+
+# ===============================
+# Prisma Specific
+# ===============================
+/prisma/migrations-lock.toml
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
+
+# ===============================
+# Environment variables (NEVER COMMIT)
+# ===============================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+!.env.example
 
 # ===============================
 # Logs
@@ -17,17 +37,11 @@ yarn-error.log*
 lerna-debug.log*
 
 # ===============================
-# Environment variables (NEVER COMMIT)
-# ===============================
-.env
-.env.*
-!.env.example
-
-# ===============================
 # OS files
 # ===============================
 .DS_Store
 Thumbs.db
+*.swp
 
 # ===============================
 # Tests & coverage
