@@ -1,0 +1,69 @@
+# ===============================
+# Node / NestJS build output
+# ===============================
+node_modules/
+dist/
+build/
+
+# ===============================
+# Logs
+# ===============================
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ===============================
+# Environment variables (NEVER COMMIT)
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# OS files
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Tests & coverage
+# ===============================
+coverage/
+.nyc_output/
+
+# ===============================
+# IDEs & editors
+# ===============================
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# VS Code (keep shared configs)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ===============================
+# Temp & runtime files
+# ===============================
+.temp/
+.tmp/
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ===============================
+# Node diagnostic reports
+# ===============================
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
