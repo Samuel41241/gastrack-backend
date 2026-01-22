@@ -1,23 +1,25 @@
 FROM node:20-alpine
 
+# Set production environment
+ENV NODE_ENV=production
+
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies first (better caching)
 COPY package*.json ./
 RUN npm install
 
-# Copy source
+# Copy application source
 COPY . .
 
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build app
+# Build NestJS application
 RUN npm run build
 
-# Remove dev dependencies
-RUN npm prune --omit=dev
-
+# Expose application port
 EXPOSE 3000
 
+# Start the application
 CMD ["node", "dist/main.js"]
