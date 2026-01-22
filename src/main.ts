@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Global validation (production-safe)
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -14,7 +15,7 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger (safe for now; can later gate by NODE_ENV)
+  // Swagger (can later be gated by NODE_ENV === 'production')
   const config = new DocumentBuilder()
     .setTitle('GasTrack API')
     .setDescription('Gas tracking backend API')
@@ -32,6 +33,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT || 3000);
+  // 🔑 CRITICAL FIX FOR RAILWAY / DOCKER
+  const port = process.env.PORT || 3000;
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`🚀 GasTrack API running on port ${port}`);
 }
+
 bootstrap();
