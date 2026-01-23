@@ -1,16 +1,18 @@
+// 🔑 HARDENING: Load environment variables before anything else
+import 'dotenv/config'; 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
-  // 🔑 HARDENING: Enable graceful shutdown
-  // This allows the app to close database connections cleanly before stopping
+  // 🛡️ GRACEFUL SHUTDOWN: Important for Railway's container management
   app.enableShutdownHooks();
 
-  // Global validation (production-safe)
+  // Global validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -19,17 +21,13 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger setup
+  // Swagger (API Documentation)
   const config = new DocumentBuilder()
     .setTitle('GasTrack API')
     .setDescription('Gas tracking backend API')
     .setVersion('1.0')
     .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-      },
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'JWT-auth',
     )
     .build();
@@ -37,11 +35,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // 🔑 CRITICAL: Listen on 0.0.0.0 for Railway/Docker
+  // 🚀 LISTEN: Bind to 0.0.0.0 for Docker/Railway compatibility
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 GasTrack API running on port ${port}`);
+  logger.log(`GasTrack API is live on port ${port}`);
 }
 
 bootstrap();
