@@ -9,14 +9,11 @@ RUN apk add --no-cache libc6-compat openssl
 # Copy dependency files first (better caching)
 COPY package.json package-lock.json ./
 
-# Install all dependencies (including dev for build)
+# Install dependencies (needed for build)
 RUN npm install
 
 # Copy source code
 COPY . .
-
-# Generate Prisma Client (REQUIRED in container)
-RUN npx prisma generate
 
 # Build NestJS app
 RUN npm run build
@@ -27,5 +24,5 @@ RUN npm prune --omit=dev
 # Railway exposes PORT dynamically
 EXPOSE 3000
 
-# Start app
-CMD ["node", "dist/main.js"]
+# Prisma runs ONLY at runtime (env vars available)
+CMD sh -c "npx prisma migrate deploy && node dist/main.js"

@@ -4,9 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create(AppModule);
 
   // Global validation
   app.useGlobalPipes(
@@ -17,7 +15,7 @@ async function bootstrap() {
     }),
   );
 
-  // Graceful shutdown (important for Prisma on Railway)
+  // Enable graceful shutdown (important for Prisma)
   app.enableShutdownHooks();
 
   // Swagger ONLY outside production
@@ -42,7 +40,7 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT) || 3000;
 
-  // IMPORTANT: bind to 0.0.0.0 for Railway containers
+  // REQUIRED for Railway containers
   await app.listen(port, '0.0.0.0');
 
   console.log(`🚀 GasTrack backend running on port ${port}`);
