@@ -1,31 +1,33 @@
+# 1. Use the stable Node.js 20 Alpine image for a small footprint
 FROM node:20-alpine
 
-# Set production environment
+# 2. Set environment to production
 ENV NODE_ENV=production
 
 WORKDIR /app
 
-# Install dependencies
+# 3. Copy package files first to leverage Docker layer caching
 COPY package*.json ./
-# Note: We use --omit=dev only if Nest CLI is in 'dependencies'
+
+# 4. Install production dependencies
 RUN npm install
 
-# Copy application source
+# 5. Copy your source code (including the prisma folder)
 COPY . .
 
-# 🔑 FIX: Provide a placeholder for the build phase
-# This prevents the "DATABASE_URL not found" error during 'prisma generate'
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
-
-# Generate Prisma Client
+# 6. 🔑 PRODUCTION BUILD ARGUMENT
+# We use your private URL so Prisma can generate the client correctly.
+# This does not "hardcode" it into the final running app; Railway overrides it at runtime.
+ARG DATABASE_URL="postgresql://postgres:wQfokqylyzskyXbOeQfqFguyaVncRLuP@postgres.railway.internal:5432/railway"
 RUN npx prisma generate
 
-# Build NestJS application
+# 7. Build the NestJS application
 RUN npm run build
 
-# Expose application port
+# 8. Inform Docker that the app listens on port 3000
 EXPOSE 3000
 
-# 🚀 FINAL FIX: Run migrations BEFORE starting the app
-# Using 'sh -c' allows us to chain commands at runtime
+# 9. 🚀 PRODUCTION STARTUP COMMAND
+# We use 'sh -c' to run migrations BEFORE starting the server.
+# This ensures your tables exist and match your schema before the app tries to use them.
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
