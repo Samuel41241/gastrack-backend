@@ -1,22 +1,31 @@
 FROM node:20-alpine
 
-# 🛡️ Standard: Prisma 6+ REQUIRES openssl on Alpine Linux
-RUN apk add --no-cache openssl
-
+# Create app directory
 WORKDIR /app
 
-COPY package*.json ./
+# Install OS deps needed for Prisma + Node
+RUN apk add --no-cache libc6-compat openssl
+
+# Copy dependency files first (better caching)
+COPY package.json package-lock.json ./
+
+# Install all dependencies (including dev for build)
 RUN npm install
 
+# Copy source code
 COPY . .
 
-ENV NODE_ENV=production
-
-# 🛡️ Standard: Generate client at build, Migrate at runtime
+# Generate Prisma Client (REQUIRED in container)
 RUN npx prisma generate
-RUN npx @nestjs/cli build
 
+# Build NestJS app
+RUN npm run build
+
+# Remove dev dependencies for production
+RUN npm prune --omit=dev
+
+# Railway exposes PORT dynamically
 EXPOSE 3000
 
-# 🛡️ Standard: Use shell to ensure environment variable mapping
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Start app
+CMD ["node", "dist/main.js"]

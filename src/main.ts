@@ -1,32 +1,51 @@
-// 🛡️ Standard: Load env vars first to bridge Prisma WASM engine timing
-import 'dotenv/config'; 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
 
-  // 🛡️ Standard: Enable Graceful Shutdown
+  // Global validation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  // Graceful shutdown (important for Prisma on Railway)
   app.enableShutdownHooks();
 
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  // Swagger ONLY outside production
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('GasTrack API')
+      .setDescription('Gas tracking backend API')
+      .setVersion('1.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+        'JWT-auth',
+      )
+      .build();
 
-  const config = new DocumentBuilder()
-    .setTitle('GasTrack API')
-    .setVersion('1.0')
-    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT-auth')
-    .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  const port = Number(process.env.PORT) || 3000;
 
-  const port = process.env.PORT || 3000;
-  // 🛡️ Standard: Bind to 0.0.0.0 for containerized environments
+  // IMPORTANT: bind to 0.0.0.0 for Railway containers
   await app.listen(port, '0.0.0.0');
 
-  logger.log(`GasTrack API is live and production-hardened on port ${port}`);
+  console.log(`🚀 GasTrack backend running on port ${port}`);
 }
+
 bootstrap();
