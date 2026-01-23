@@ -6,6 +6,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // 🔑 HARDENING: Enable graceful shutdown
+  // This allows the app to close database connections cleanly before stopping
+  app.enableShutdownHooks();
+
   // Global validation (production-safe)
   app.useGlobalPipes(
     new ValidationPipe({
@@ -15,7 +19,7 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger (can later be gated by NODE_ENV === 'production')
+  // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('GasTrack API')
     .setDescription('Gas tracking backend API')
@@ -33,7 +37,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // 🔑 CRITICAL FIX FOR RAILWAY / DOCKER
+  // 🔑 CRITICAL: Listen on 0.0.0.0 for Railway/Docker
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');
 
