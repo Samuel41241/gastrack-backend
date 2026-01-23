@@ -1,4 +1,4 @@
-// 🔑 HARDENING: Load environment variables before anything else
+// 🛡️ Standard: Load env vars first to bridge Prisma WASM engine timing
 import 'dotenv/config'; 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -9,37 +9,24 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
-  // 🛡️ GRACEFUL SHUTDOWN: Important for Railway's container management
+  // 🛡️ Standard: Enable Graceful Shutdown
   app.enableShutdownHooks();
 
-  // Global validation
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  // Swagger (API Documentation)
   const config = new DocumentBuilder()
     .setTitle('GasTrack API')
-    .setDescription('Gas tracking backend API')
     .setVersion('1.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'JWT-auth',
-    )
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'JWT-auth')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // 🚀 LISTEN: Bind to 0.0.0.0 for Docker/Railway compatibility
   const port = process.env.PORT || 3000;
+  // 🛡️ Standard: Bind to 0.0.0.0 for containerized environments
   await app.listen(port, '0.0.0.0');
 
-  logger.log(`GasTrack API is live on port ${port}`);
+  logger.log(`GasTrack API is live and production-hardened on port ${port}`);
 }
-
 bootstrap();
