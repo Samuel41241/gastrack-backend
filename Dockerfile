@@ -1,33 +1,35 @@
-# 1. Use Node 20 Alpine (standard production base)
+# 1. Use Node 20 Alpine for production
 FROM node:20-alpine
 
-# 2. Install openssl - Prisma 6+ REQUIRES this on Alpine to talk to Postgres
+# 2. Install openssl - Required for Prisma on Alpine
 RUN apk add --no-cache openssl
-
-# 3. Set environment to production
-ENV NODE_ENV=production
 
 WORKDIR /app
 
-# 4. Install dependencies (Prisma must be in 'dependencies', not 'devDependencies')
+# 3. Copy package files
 COPY package*.json ./
+
+# 4. Install ALL dependencies (including devDependencies) 
+# We need them for the build step. We set NODE_ENV=production AFTER this.
 RUN npm install
 
-# 5. Copy your code
+# 5. Copy your application source
 COPY . .
 
-# 6. 🔑 PRODUCTION BUILD STEP
-# We skip strict validation during build to avoid 'localhost' errors.
-# The client is generated here, but it will use the REAL URL at runtime.
+# 6. Set Environment to production for the build and runtime
+ENV NODE_ENV=production
+
+# 7. 🔑 Build Argument for Prisma
+# Using your private URL helps Prisma validate the schema during build.
+ARG DATABASE_URL="postgresql://postgres:wQfokqylyzskyXbOeQfqFguyaVncRLuP@postgres.railway.internal:5432/railway"
 RUN npx prisma generate
 
-# 7. Build the NestJS app
-RUN npm run build
+# 8. 🔑 FIX: Run the build using npx to ensure Nest CLI is found
+RUN npx @nestjs/cli build
 
-# 8. Expose port (Railway will override this with its own PORT variable)
+# 9. Inform Docker the app runs on port 3000
 EXPOSE 3000
 
-# 9. 🚀 THE PRODUCTION STARTUP SEQUENCE
-# We use 'sh -c' to ensure Railway's variables are fully injected into the shell.
-# We run migrations first, then start the server.
+# 10. 🚀 PRODUCTION STARTUP
+# We run migrations first to ensure the DB is ready, then start the compiled JS.
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
