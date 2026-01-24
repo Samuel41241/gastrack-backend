@@ -15,6 +15,9 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Generate Prisma Client at BUILD time (safe)
+RUN npx prisma generate
+
 # Build NestJS app
 RUN npm run build
 
@@ -24,5 +27,5 @@ RUN npm prune --omit=dev
 # Railway exposes PORT dynamically
 EXPOSE 3000
 
-# Prisma runs ONLY at runtime (env vars available)
-CMD sh -c "npx prisma migrate deploy && node dist/main.js"
+# ❗ NO Prisma CLI at runtime
+CMD ["node", "dist/main.js"]
